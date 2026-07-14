@@ -23,12 +23,12 @@ app.use(middlewareRevision);
 // 1. IMPORTAR LAS RUTAS
 const healthRoutes = require('./routes/salud');
 const productosRoutes = require('./routes/productos'); 
-const usuariosRoutes = require('./routes/usuarios'); // <-- Agregada la importación de usuarios
+const proveedoresRoutes = require('./routes/proveedores');// <-- Agregada la importación de usuarios
 
 // 2. REGISTRAR LAS RUTAS CON LA '/' INICIAL CORRECTA
 app.use('/api/v1', healthRoutes);
 app.use('/api/v1', productosRoutes); 
-app.use('/api/v1', usuariosRoutes); // <-- Agregado el registro para que Express las reconozca
+app.use('/api/v1', proveedoresRoutes);// <-- Agregado el registro para que Express las reconozca
 
 const PORT = process.env.PORT || 3000;
 
