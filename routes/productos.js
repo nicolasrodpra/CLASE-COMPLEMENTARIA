@@ -1,0 +1,92 @@
+const express = require('express');
+const router = express.Router();
+const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb'); 
+
+
+router.get('/health', (req, res) => {
+    res.status(200).json({
+        estado: "Servidor funcionando", 
+        Timestamp: new Date().toISOString()
+    });
+});
+
+
+router.get('/productos', async (req, res) => {
+    try {
+        const productos = await mongoose.connection.db.collection('productos').find({}).toArray();
+        res.json(productos);
+    } catch (error) {
+        res.status(500).json({ error: "Error al consultar los productos" });
+    }
+});
+
+
+router.post('/productos', async (req, res) => {
+    try {
+        const nuevoProducto = req.body;
+
+        if (!nuevoProducto.nombre || !nuevoProducto.precio) {
+            return res.status(400).json({
+                error: "Formato invalido, el precio y el nombre son obligatorios"
+            });
+        }
+
+        const resultado = await mongoose.connection.db.collection('productos').insertOne(nuevoProducto);
+
+        res.status(201).json({
+            mensaje: "Producto creado",
+            id_generado: resultado.insertedId,
+            datosGuardados: nuevoProducto
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error critico al guardar el producto" });
+    }
+});
+
+
+router.put('/productos/:id', async (req, res) => {
+    try {
+        const idProducto = req.params.id;
+        const datosNuevos = req.body;
+
+        const resultado = await mongoose.connection.db.collection('productos').updateOne(
+            { _id: new ObjectId(idProducto) }, 
+            { $set: datosNuevos } 
+        );
+
+        if (resultado.matchedCount === 0) {
+            return res.status(404).json({ error: "Producto no encontrado en la BD" });
+        }
+
+        res.json({
+            mensaje: "Producto actualizado correctamente", 
+            modificaciones: resultado.modifiedCount
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "No se pudo actualizar el producto" });
+    }
+});
+
+
+router.delete('/productos/:id', async (req, res) => {
+    try {
+        const idProducto = req.params.id;
+        const resultado = await mongoose.connection.db.collection('productos').deleteOne({
+            _id: new ObjectId(idProducto)
+        });
+
+        if (resultado.deletedCount === 0) {
+            return res.status(404).json({ error: "Producto no encontrado en la BD o ya fue eliminado." });
+        }
+
+        res.json({ mensaje: "Producto eliminado correctamente" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "No se pudo eliminar el producto" });
+    }
+});
+
+module.exports = router;
