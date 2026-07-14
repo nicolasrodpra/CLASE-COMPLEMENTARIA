@@ -88,5 +88,43 @@ router.delete('/productos/:id', async (req, res) => {
         res.status(500).json({ error: "No se pudo eliminar el producto" });
     }
 });
+// PATCH - Reto Adicional: Actualizar solo el estado del producto
+router.patch('/actualizar-estado/:id', async (req, res) => {
+    try {
+        const idProducto = req.params.id;
+        const { estado_nuevo } = req.body; // El nuevo estado que vas a enviar desde Insomnia
 
+        // 1. Consultar si el recurso existe
+        const producto = await mongoose.connection.db.collection('productos').findOne({
+            _id: new ObjectId(idProducto)
+        });
+
+        if (!producto) {
+            return res.status(404).json({ error: "El producto no existe en la base de datos." });
+        }
+
+        // 2. Condición de negocio estricta
+        if (producto.estado === 'finalizado') {
+            return res.status(403).json({ 
+                error: "Prohibido: El producto ya se encuentra 'finalizado' y su estado es inmodificable." 
+            });
+        }
+
+        // 3. Actualizar solo el campo de estado si pasa la validación
+        await mongoose.connection.db.collection('productos').updateOne(
+            { _id: new ObjectId(idProducto) },
+            { $set: { estado: estado_nuevo } }
+        );
+
+        res.json({ 
+            mensaje: "Estado actualizado exitosamente",
+            estado_anterior: producto.estado || "sin estado",
+            estado_actual: estado_nuevo
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error interno al intentar actualizar el estado" });
+    }
+});
 module.exports = router;
