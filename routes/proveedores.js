@@ -19,10 +19,10 @@ router.post('/proveedores', async (req, res) => {
     try {
         const nuevoProveedor = req.body;
 
-        // Validación básica: Exigimos nombre y email (contacto del proveedor)
-        if (!nuevoProveedor.nombre || !nuevoProveedor.email) {
+        // VALIDACIÓN CORREGIDA: Exigimos nombre y correo (no email)
+        if (!nuevoProveedor.nombre || !nuevoProveedor.correo) {
             return res.status(400).json({
-                error: "Formato invalido, el nombre y el email son obligatorios"
+                error: "Formato invalido, el nombre y el correo son obligatorios"
             });
         }
 

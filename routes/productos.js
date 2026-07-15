@@ -3,14 +3,12 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb'); 
 
-
 router.get('/health', (req, res) => {
     res.status(200).json({
         estado: "Servidor funcionando", 
         Timestamp: new Date().toISOString()
     });
 });
-
 
 router.get('/productos', async (req, res) => {
     try {
@@ -21,7 +19,6 @@ router.get('/productos', async (req, res) => {
     }
 });
 
-
 router.post('/productos', async (req, res) => {
     try {
         const nuevoProducto = req.body;
@@ -31,6 +28,9 @@ router.post('/productos', async (req, res) => {
                 error: "Formato invalido, el precio y el nombre son obligatorios"
             });
         }
+
+        // 🔥 AGREGADO PARA EL RETO: Todo producto nuevo nace como 'pendiente' por defecto
+        nuevoProducto.estado = nuevoProducto.estado || "pendiente";
 
         const resultado = await mongoose.connection.db.collection('productos').insertOne(nuevoProducto);
 
@@ -44,7 +44,6 @@ router.post('/productos', async (req, res) => {
         res.status(500).json({ error: "Error critico al guardar el producto" });
     }
 });
-
 
 router.put('/productos/:id', async (req, res) => {
     try {
@@ -70,7 +69,6 @@ router.put('/productos/:id', async (req, res) => {
     }
 });
 
-
 router.delete('/productos/:id', async (req, res) => {
     try {
         const idProducto = req.params.id;
@@ -88,11 +86,14 @@ router.delete('/productos/:id', async (req, res) => {
         res.status(500).json({ error: "No se pudo eliminar el producto" });
     }
 });
-// PATCH - Reto Adicional: Actualizar solo el estado del producto
+
+// ==========================================
+// 🔥 RETO ADICIONAL: Actualizar solo el estado
+// ==========================================
 router.patch('/actualizar-estado/:id', async (req, res) => {
     try {
         const idProducto = req.params.id;
-        const { estado_nuevo } = req.body; // El nuevo estado que vas a enviar desde Insomnia
+        const { estado_nuevo } = req.body; 
 
         // 1. Consultar si el recurso existe
         const producto = await mongoose.connection.db.collection('productos').findOne({
@@ -103,7 +104,7 @@ router.patch('/actualizar-estado/:id', async (req, res) => {
             return res.status(404).json({ error: "El producto no existe en la base de datos." });
         }
 
-        // 2. Condición de negocio estricta
+        // 2. Condición de negocio estricta (El bloqueo de seguridad)
         if (producto.estado === 'finalizado') {
             return res.status(403).json({ 
                 error: "Prohibido: El producto ya se encuentra 'finalizado' y su estado es inmodificable." 
@@ -127,4 +128,5 @@ router.patch('/actualizar-estado/:id', async (req, res) => {
         res.status(500).json({ error: "Error interno al intentar actualizar el estado" });
     }
 });
+
 module.exports = router;
